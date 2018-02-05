@@ -1,3 +1,8 @@
+# Project-specific stuff
+charts/
+logs/
+*.pem
+Untitled*.ipynb
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
