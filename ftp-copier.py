@@ -109,9 +109,8 @@ if __name__ == '__main__':
     # Loop over forecast products and times until max_fcst
     for model in config['models']:
         vrbls = config[model]['variable']
-        step = int(config[model]['step'])
-        max_fcst = int(config[model]['max_fcst'])
-        for fcst in range(0, max_fcst+step, step):
+        fcst_range = eval(config[model]['fcst_hours'])
+        for fcst in fcst_range:
             url = URL_MASK.format(top_url=TOP_URL,
                                   model=model,
                                   vrbls=vrbls,
