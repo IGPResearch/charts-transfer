@@ -2,6 +2,7 @@
 """
 Download files from IMO's website and upload to CEDA FTP project space
 """
+from pdb import set_trace
 import configparser
 from datetime import datetime, timedelta
 import ftplib
@@ -138,12 +139,12 @@ if __name__ == '__main__':
 
                     file_name = Path(url).name
                     local_dir = (LOC_DIR / src.upper()
-                                 / today.strftime('%Y%m%d%H%M'))
+                                 / fcst_init.strftime('%Y%m%d%H%M'))
                     if not local_dir.exists():
                         local_dir.mkdir(parents=True)
                     file_name = local_dir / file_name
 
-                    err = download(url, file_name)
+                    err = download(url, file_name, **req_kw)
                     if err != 0:
                         continue
 
@@ -154,8 +155,9 @@ if __name__ == '__main__':
                             L.warning(('PIL ImportError, '
                                        'no compression applied'))
                             to_quality = None
-                    else:
-                        to_quality = int(to_quality)
+                        else:
+                            to_quality = int(to_quality)
+                    # set_trace()
 
                     if to_quality is not None:
                         im = Image.open(file_name)
@@ -165,5 +167,6 @@ if __name__ == '__main__':
                         file_name = new_dir / file_name.name
                         im.save(file_name, quality=to_quality, optimize=True)
                         L.info('Low-res image saved to {}'.format(file_name))
-                    workdir = target_dir.format(fcst_day=fcst_init, source=src)
+                    workdir = target_dir.format(fcst_day=fcst_init,
+                                                source=src.upper())
                     upload(file_name, ADDR, workdir, USER, PASS)
