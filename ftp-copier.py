@@ -72,6 +72,7 @@ def _parse_str_seq(x):
 
 
 if __name__ == '__main__':
+    cwd = Path('.').absolute()
     today = datetime.utcnow()
     # Temporary workaround
     if today.hour >= 21:
@@ -82,9 +83,9 @@ if __name__ == '__main__':
     # Initialise config parser
     config = configparser.ConfigParser()
     # Read configs from the same directory
-    config.read('settings.ini')
+    config.read(cwd / 'settings.ini')
 
-    LOC_DIR = Path(config['general']['local_dir'])
+    LOC_DIR = cwd / config['general']['local_dir']
 
     # Set up logger parameters
     log_dir = Path(config['general']['log_dir'])
@@ -138,7 +139,7 @@ if __name__ == '__main__':
                     L.info('Downloading {}'.format(url))
 
                     file_name = Path(url).name
-                    local_dir = (LOC_DIR / src.upper()
+                    local_dir = (cwd / LOC_DIR / src.upper()
                                  / fcst_init.strftime('%Y%m%d%H%M'))
                     if not local_dir.exists():
                         local_dir.mkdir(parents=True)
