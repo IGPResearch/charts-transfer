@@ -4,11 +4,16 @@ Download files from IMO's website and upload to CEDA FTP project space
 """
 import configparser
 from datetime import datetime
-import requests
 import ftplib
-from pathlib import Path
 # from getpass import getpass
 import logging
+import requests
+from pathlib import Path
+try:
+    from PIL import Image
+    pil_ok = True
+except ImportError:
+    pil_ok = False
 
 
 def download(url, file_name, **req_kw):
@@ -18,7 +23,7 @@ def download(url, file_name, **req_kw):
 
     if img_req.status_code == 200:
         # open in binary mode
-        with Path(file_name).open('wb') as file:
+        with file_name.open('wb') as file:
             # write to file
             file.write(img_req.content)
         return 0
@@ -49,7 +54,7 @@ def upload(file_name, addr, topdir, dt, username, password):
             else:
                 ftp.mkd(subdir)
                 ftp.cwd(subdir)
-        ftp.storbinary("STOR " + Path(file_name).name, open(file_name, 'rb'))
+        ftp.storbinary("STOR " + file_name.name, file_name.open('rb'))
         # logger.info(ftp.retrlines('LIST'))
 
 
@@ -88,6 +93,15 @@ if __name__ == '__main__':
     # add the handlers to the logger
     logger.addHandler(fh)
 
+    # Compress images using PIL
+    compress_to_quality = config['other'].get('compress_to_quality')
+    if compress_to_quality is not None:
+        if not pil_ok:
+            logger.warning('PIL ImportError, no compression applied')
+            compress_to_quality = None
+        else:
+            compress_to_quality = int(compress_to_quality)
+
     # CEDA configs
     ADDR = config['ceda']['address']
     USER = config['ceda']['username']
@@ -122,8 +136,17 @@ if __name__ == '__main__':
             local_dir = LOC_DIR / today.strftime('%Y%m%d%H%M')
             if not local_dir.exists():
                 local_dir.mkdir(parents=True)
-            file_name = str(local_dir / file_name)
+            file_name = local_dir / file_name
 
             err = download(url, file_name)
-            if err == 0:
-                upload(file_name, ADDR, topdir, today, USER, PASS)
+            if err != 0:
+                continue
+            if compress_to_quality is not None:
+                im = Image.open(file_name)
+                new_dir = file_name.parent / 'lowres'
+                if not new_dir.exists():
+                    new_dir.mkdir()
+                file_name = new_dir / file_name.name
+                im.save(file_name, quality=compress_to_quality, optimize=True)
+                logger.info('Saved low-res image to {}'.format(file_name))
+            upload(file_name, ADDR, topdir, today, USER, PASS)
