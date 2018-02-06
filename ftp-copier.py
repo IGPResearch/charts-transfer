@@ -72,7 +72,7 @@ def _parse_str_seq(x):
 
 
 if __name__ == '__main__':
-    cwd = Path('.').absolute()
+    cwd = Path(__file__).parent.absolute()
     today = datetime.utcnow()
     # Temporary workaround
     if today.hour >= 21:
