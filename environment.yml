@@ -1,0 +1,6 @@
+name: igp
+channels:
+- conda-forge
+dependencies:
+- PIL
+- requests
