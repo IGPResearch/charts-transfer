@@ -88,7 +88,7 @@ if __name__ == '__main__':
     LOC_DIR = cwd / config['general']['local_dir']
 
     # Set up logger parameters
-    log_dir = Path(config['general']['log_dir'])
+    log_dir = cwd / Path(config['general']['log_dir'])
     if not log_dir.exists():
         log_dir.mkdir()
     log_file = log_dir / (config['general']['log_file']
