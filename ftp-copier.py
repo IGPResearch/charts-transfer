@@ -2,7 +2,7 @@
 """
 Download files from IMO's website and upload to CEDA FTP project space
 """
-from pdb import set_trace
+from pdb import set_trace  # NOQA
 import configparser
 from datetime import datetime, timedelta
 import ftplib
@@ -71,6 +71,64 @@ def _parse_str_seq(x):
     return [*filter(None, [i.strip() for i in x.split(',')])]
 
 
+def process_chart(chart, fcst_init, fcst_hour):
+    variable = chart['name'].strip()
+    src, model = chart['model'].split(':')
+    sub = chart.get('substitute', '').strip()
+
+    src_user = config[src].get('username')
+    src_pass = config[src].get('password')
+    if src_user and src_pass:
+        req_kw = dict(auth=HTTPBasicAuth(src_user, src_pass))
+    else:
+        req_kw = dict()
+
+    fcst_valid = fcst_init + timedelta(hours=fcst_hour)
+    url = config[src]['url_mask'].format(fcst_init=fcst_init,
+                                         fcst_valid=fcst_valid,
+                                         fcst_hour=fcst_hour,
+                                         model=model,
+                                         variable=variable)
+    L.info('Downloading {}'.format(url))
+
+    file_name = Path(url).name
+    local_dir = (cwd / LOC_DIR / src.upper()
+                 / fcst_init.strftime('%Y%m%d%H%M'))
+    L.debug('local_dir={}'.format(local_dir))
+    if not local_dir.exists():
+        local_dir.mkdir(parents=True)
+    file_name = local_dir / file_name
+
+    err = download(url, file_name, **req_kw)
+    if err != 0:
+        if sub:
+            L.info('Trying to substitute with {}'.format(sub))
+            process_chart(config[sub], fcst_init, fcst_hour)
+    else:
+        # Compress images using PIL
+        to_quality = config[src].get('to_quality')
+        if to_quality is not None:
+            if not pil_ok:
+                L.warning(('PIL ImportError, '
+                           'no compression applied'))
+                to_quality = None
+            else:
+                to_quality = int(to_quality)
+        # set_trace()
+
+        if to_quality is not None:
+            im = Image.open(file_name)
+            new_dir = file_name.parent / 'lowres'
+            if not new_dir.exists():
+                new_dir.mkdir()
+            file_name = new_dir / file_name.name
+            im.save(file_name, quality=to_quality, optimize=True)
+            L.info('Low-res image saved to {}'.format(file_name))
+        workdir = target_dir.format(fcst_day=fcst_init,
+                                    source=src.upper())
+        upload(file_name, ADDR, workdir, USER, PASS)
+
+
 if __name__ == '__main__':
     cwd = Path(__file__).parent.absolute()
     today = datetime.utcnow()
@@ -111,63 +169,17 @@ if __name__ == '__main__':
     PASS = config['ceda']['password']  # , getpass('password:'))
     target_dir = config['ceda']['target_dir']
 
-    # Met Offices (image sources)
-    sources = _parse_str_seq(config['general']['sources'])
+    # What charts to transfer
+    chart_numbers = _parse_str_seq(config['general']['charts'])
     default_hours = config['general']['default_hours']
 
-    for src in sources:
-        src_user = config[src].get('username')
-        src_pass = config[src].get('password')
-        if src_user and src_pass:
-            req_kw = dict(auth=HTTPBasicAuth(src_user, src_pass))
-        else:
-            req_kw = dict()
+    for cn in chart_numbers:
+        chart = config[cn]
+        fcst_hours = list(eval(chart.get('fcst_hours', default_hours)))
+        freq = int(chart.get('freq', 1))  # 1 means every day
+        if today.day % freq != 0:
+            # Today is not the day for downloading this chart
+            continue
 
-        models = _parse_str_seq(config[src]['models'])
-        for model in models:
-            group = config['{}-{}'.format(src, model)]
-            vrbls = _parse_str_seq(group['vars'])
-            fcst_hours = eval(group.get('fcst_hours', default_hours))
-            for v in vrbls:
-                for fcst_hour in fcst_hours:
-                    fcst_valid = fcst_init + timedelta(hours=fcst_hour)
-                    url = config[src]['url_mask'].format(fcst_init=fcst_init,
-                                                         fcst_valid=fcst_valid,
-                                                         fcst_hour=fcst_hour,
-                                                         model=model,
-                                                         variable=v)
-                    L.info('Downloading {}'.format(url))
-
-                    file_name = Path(url).name
-                    local_dir = (cwd / LOC_DIR / src.upper()
-                                 / fcst_init.strftime('%Y%m%d%H%M'))
-                    if not local_dir.exists():
-                        local_dir.mkdir(parents=True)
-                    file_name = local_dir / file_name
-
-                    err = download(url, file_name, **req_kw)
-                    if err != 0:
-                        continue
-
-                    # Compress images using PIL
-                    to_quality = config[src].get('to_quality')
-                    if to_quality is not None:
-                        if not pil_ok:
-                            L.warning(('PIL ImportError, '
-                                       'no compression applied'))
-                            to_quality = None
-                        else:
-                            to_quality = int(to_quality)
-                    # set_trace()
-
-                    if to_quality is not None:
-                        im = Image.open(file_name)
-                        new_dir = file_name.parent / 'lowres'
-                        if not new_dir.exists():
-                            new_dir.mkdir()
-                        file_name = new_dir / file_name.name
-                        im.save(file_name, quality=to_quality, optimize=True)
-                        L.info('Low-res image saved to {}'.format(file_name))
-                    workdir = target_dir.format(fcst_day=fcst_init,
-                                                source=src.upper())
-                    upload(file_name, ADDR, workdir, USER, PASS)
+        for fcst_hour in fcst_hours:
+            process_chart(chart, fcst_init, fcst_hour)
