@@ -175,7 +175,10 @@ if __name__ == '__main__':
 
     for cn in chart_numbers:
         chart = config[cn]
-        fcst_hours = list(eval(chart.get('fcst_hours', default_hours)))
+        try:
+            fcst_hours = list(eval(chart.get('fcst_hours', default_hours)))
+        except TypeError:
+            fcst_hours = [eval(chart.get('fcst_hours', default_hours))]
         freq = int(chart.get('freq', 1))  # 1 means every day
         if today.day % freq != 0:
             # Today is not the day for downloading this chart
