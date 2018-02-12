@@ -84,11 +84,12 @@ def process_chart(chart, fcst_init, fcst_hour):
         req_kw = dict()
 
     fcst_valid = fcst_init + timedelta(hours=fcst_hour)
-    url = config[src]['url_mask'].format(fcst_init=fcst_init,
-                                         fcst_valid=fcst_valid,
-                                         fcst_hour=fcst_hour,
-                                         model=model,
-                                         variable=variable)
+    url_mask = chart.get('url_mask', config[src]['url_mask'])
+    url = url_mask.format(fcst_init=fcst_init,
+                          fcst_valid=fcst_valid,
+                          fcst_hour=fcst_hour,
+                          model=model,
+                          variable=variable)
     L.info('Downloading {}'.format(url))
 
     file_name = Path(url).name
