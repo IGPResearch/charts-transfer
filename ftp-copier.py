@@ -122,7 +122,7 @@ def process_chart(chart, fcst_init, fcst_hour):
             new_dir = file_name.parent / 'lowres'
             if not new_dir.exists():
                 new_dir.mkdir()
-            file_name = new_dir / file_name.name.with_suffix('.jpg')
+            file_name = new_dir / file_name.with_suffix('.jpg').name
             im.save(file_name, quality=to_quality, optimize=True)
             L.info('Low-res image saved to {}'.format(file_name))
         workdir = target_dir.format(fcst_day=fcst_init,
