@@ -2,7 +2,6 @@
 """
 Download files from IMO's website and upload to CEDA FTP project space
 """
-from pdb import set_trace  # NOQA
 import configparser
 from datetime import datetime, timedelta
 import ftplib
@@ -123,7 +122,11 @@ def process_chart(chart, fcst_init, fcst_hour):
             if not new_dir.exists():
                 new_dir.mkdir()
             file_name = new_dir / file_name.with_suffix('.jpg').name
-            im.save(file_name, quality=to_quality, optimize=True)
+            try:
+                im.save(file_name, quality=to_quality, optimize=True)
+            except OSError:
+                im.convert('RGB').save(file_name,
+                                       quality=to_quality, optimize=True)
             L.info('Low-res image saved to {}'.format(file_name))
         workdir = target_dir.format(fcst_day=fcst_init,
                                     source=src.upper())
