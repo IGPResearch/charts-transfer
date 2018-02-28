@@ -156,7 +156,7 @@ if __name__ == '__main__':
     log_file = log_dir / (config['general']['log_file']
                           .format(datetime=today.strftime('%Y%m%d%H%M')))
     # create logger
-    L = logging.getLogger('ftp-copier')
+    L = logging.getLogger('charts_transfer')
     L.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
     fh = logging.FileHandler(log_file)
