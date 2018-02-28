@@ -67,8 +67,6 @@ if __name__ == '__main__':
     # Read configs from the same directory
     config.read(cwd / 'ftp-copy-settings.ini')
 
-    LOC_DIR = cwd / config['general']['local_dir']
-
     # Set up logger parameters
     log_dir = cwd / Path(config['general']['log_dir'])
     if not log_dir.exists():
