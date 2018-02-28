@@ -56,14 +56,14 @@ def upload(file_name, addr, workdir, username, password):
                 ftp.cwd(subdir)
         ftp.storbinary("STOR " + file_name.name, file_name.open('rb'))
         # L.info(ftp.retrlines('LIST'))
-
-
-def delete_from_ftp(file_name, top_addr, topdir, dt, username, password):
-    workdir = '{topdir}/{dt:%Y%m%d}/IMO'.format(topdir=topdir, dt=dt)
-    with ftplib.FTP(top_addr) as ftp:
-        ftp.login(user=username, passwd=password)
-        ftp.cwd(workdir)
-        ftp.delete(file_name)
+#
+#
+# def delete_from_ftp(file_name, top_addr, topdir, dt, username, password):
+#     workdir = '{topdir}/{dt:%Y%m%d}/IMO'.format(topdir=topdir, dt=dt)
+#     with ftplib.FTP(top_addr) as ftp:
+#         ftp.login(user=username, passwd=password)
+#         ftp.cwd(workdir)
+#         ftp.delete(file_name)
 
 
 def _parse_str_seq(x):
