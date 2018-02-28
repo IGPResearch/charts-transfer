@@ -35,12 +35,9 @@ def ftp_copy(addr, username, password, src_dir, tgt_dir, fnames):
         filelist = []
         ftp.retrlines('LIST ' + src_dir, filelist.append)
         filelist = [f.split()[-1] for f in filelist]
-        # print(fnames)
         for f in filelist:
-            # print(f)
             if f in fnames:
-                # L.info('Copying {}'.format(f))
-                print('Copying {}'.format(f))
+                L.info('Copying {}'.format(f))
                 # Change directory to src_dir
                 ftp.cwd(src_dir)
                 with temp_binary.open('wb') as io:
